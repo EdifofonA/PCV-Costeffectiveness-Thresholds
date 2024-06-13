@@ -1,5 +1,5 @@
 % Last updated 25 March 2024
-\ProvidesPackage{ediArticle}
+\ProvidesPackage{latex/ediArticle}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % DOCUMENT LAYOUT AND PARAGRAPHS %
@@ -29,15 +29,12 @@
 % line spacing of paragraphs
 \usepackage{setspace} 
 %    \onehalfspacing
-\setstretch{1.4}
+\setstretch{1.5}
 
 
 % Font of URL in bibliography should be same as upright font
 \usepackage{url}
-\urlstyle{rm}
-
-% No paragraph indentation
-\setlength{\parindent}{0pt} 
+    \urlstyle{rm}
 
 % Space between paragraphs
 \setlength{\parskip}{8pt} 
@@ -58,7 +55,7 @@
             maxcitenames=3,
             giveninits=true,
             %terseinits=true,
-            uniquename=init,
+            uniquename=false,
             uniquelist=false,
             date=year,              % only year in reference list
             %labeldate=long,
@@ -67,7 +64,7 @@
             %backend=biber,
             ]{biblatex}
     
-    % Sort order for references
+    % Sort order for authors in bibliography
     \DeclareNameAlias{sortname}{family-given}
     
     % no punct btw family & given names
@@ -121,7 +118,7 @@
     \usebibmacro{textcite}}}
 
 
-\addbibresource{references.bib}
+\addbibresource{latex/references.bib}
 
 
 % links in document
@@ -138,12 +135,12 @@
     \captionsetup[figure]{font={normalsize, stretch=1.1}, skip=0.5pt}
 
 % row height of table contents
-\renewcommand{\arraystretch}{1.1} 
+\renewcommand{\arraystretch}{1.2} 
 
 % neatly formatting (table) lines
 \usepackage{booktabs} 
 
-% define new input command tto enable table inclusion
+% define new input command to enable table inclusion from external file
 \makeatletter
 \let\PlainInput=\@@input 
 \makeatother
@@ -162,8 +159,11 @@
     \newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
     \newcolumntype{R}[1]{>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
 
-
+% For font size
 \usepackage{anyfontsize}
+
+% For space between items
+\usepackage{enumitem}
 
 % for better paragraphing
 \usepackage{microtype} 
