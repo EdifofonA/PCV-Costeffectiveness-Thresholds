@@ -1,0 +1,67 @@
+\documentclass[12pt]{article}
+
+\usepackage{ediArticle}  %from ediArticle.sty
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\title{\LARGE \bfseries \vspace{-1cm} Just Another Latex Template \\
+    \LARGE \normalfont Research Proposal}
+\author{\Large \textit{Edifofon Akpan}}
+\date{ }
+
+\begin{document}
+
+% Set font size to 13pt
+\fontsize{13pt}{15pt}\selectfont
+
+\maketitle
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction}
+Lorem ipsum dolor sit amet
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Methods}
+Lorem ipsum dolor sit amet 
+
+\hspace{1em}
+
+\begin{table}[H]
+    \centering 
+    \caption{The facts about lorem ipsum generator from online sources.}
+    \begin{tabular}{|C{2cm}|L{10cm}|C{2.5cm}|}
+        \hline
+        \PlainInput{tables/tab_1}
+    \end{tabular}
+    \label{MyTable1}
+    \caption*{\footnotesize \textit{Notes:} Donec sit amet viverra justo. Duis malesuada velit}
+\end{table}
+
+
+\section{Results}
+Lorem ipsum dolor sit amet (\autoref{MyTable1}). 
+
+\hspace{1em}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{figures/figure.png}
+    \caption{The facts about lorem ipsum generator from online sources.}
+    \label{fig:enter-label}
+    \caption*{\footnotesize \textit{Notes:} Lorem ipsum dolor sit amet}
+\end{figure}
+
+\section{Discussion}
+Lorem ipsum dolor sit amet.\parencite{akpan_cost-effectiveness_2022}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% %%%
+%%% Bibliography %%%
+
+\clearpage
+\newrefcontext[sorting=nyt]
+\printbibliography
+
+
+\end{document}
