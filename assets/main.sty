@@ -1,0 +1,228 @@
+% Last updated 25 March 2024
+\ProvidesPackage{assets/main}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% DOCUMENT LAYOUT AND PARAGRAPHS %
+\usepackage[a4paper, margin=1in]{geometry}
+    \parindent = 0 pt
+
+% change typography for document
+%\usepackage[bitstream-charter]{mathdesign}
+\usepackage[T1]{fontenc}
+\usepackage{mathptmx}
+%\renewcommand\familydefault{\sfdefault} %use sans serif
+
+% line spacing of section titles
+\usepackage{titlesec}
+    \titlespacing\section{0pt}{4pt plus 0pt minus 0pt}{-4pt plus 0pt minus 0pt}
+    \titlespacing\subsection{0pt}{4pt plus 0pt minus 0pt}{-4pt plus 0pt minus 0pt}
+    \titlespacing\subsubsection{0pt}{4pt plus 0pt minus 0pt}{-8pt plus 0pt minus 0pt}
+    \titleformat{\section}{\Large\bfseries}{\thesection}{0em}{}
+    \titleformat{\subsection}{\large\bfseries}{\thesubsection}{0em}{}{}
+    \titleformat{\subsubsection}{\small\bfseries\uppercase}{\thesubsubsection}{0em}{}{}
+
+% Include a period after the section number
+%\renewcommand\thesection{\arabic{section}.}
+%\renewcommand\thesubsection{\thesection\arabic{subsection}.}
+%\renewcommand\thesubsubsection{\thesubsection\arabic{subsubsection}.}
+
+% Or use unnumbered subsubsections
+\renewcommand\thesection{{}} 
+\renewcommand\thesubsection{{}} 
+\renewcommand\thesubsubsection{{}} 
+
+% line spacing of paragraphs
+\usepackage{setspace} 
+%    \onehalfspacing
+\setstretch{1.5}
+
+
+% Font of URL in bibliography should be same as upright font
+\usepackage{url}
+    \urlstyle{rm}
+
+% Space between paragraphs
+\setlength{\parskip}{8pt} 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% MANAGING REFERENCES %
+
+% Referencing options with BibLaTeX
+\usepackage[style=vancouver, 
+            doi=true, 
+            isbn=false,
+            url=false,              % suppress"accessed on" for articles
+            %mergedate=true,
+            %dashed=false,
+            minbibnames=3,
+            maxbibnames=6,
+            %mincitenames=1,
+            maxcitenames=3,
+            giveninits=true,
+            %terseinits=true,
+            uniquename=false,
+            uniquelist=false,
+            date=year,              % only year in reference list
+            %labeldate=long,
+            %labeldateparts=false,
+            urldate=long,
+            %backend=biber,
+            ]{biblatex}
+    
+    % Sort order for authors in bibliography
+    \DeclareNameAlias{sortname}{family-given}
+    
+    % no punct btw family & given names
+    %\renewcommand*{\revsdnamepunct}{}   
+    
+    % Change "URL" to "Available at"
+    \DeclareFieldFormat{url}{Available at\addcolon\space\url{#1}}
+    
+    % Change "DOI" to "Available at"
+    \DeclareFieldFormat{doi}{doi\addcolon\space 
+        \ifhyperref{\href{https://doi.org/#1}{\nolinkurl{#1}}}
+        {\nolinkurl{#1}}}
+
+    \DefineBibliographyStrings{english}{%
+      urlseen = {accessed},
+      in = {}}
+
+% The following code ensures both author and year are hyperlinked. Solution is based on https://tex.stackexchange.com/questions/15951/hyperlink-name-with-biblatex-authoryear-biblatex-1-4b/27107
+% \DeclareFieldFormat{citehyperref}{%
+%   \DeclareFieldAlias{bibhyperref}{noformat}% Avoid nested links
+%   \bibhyperref{#1}}
+
+% \DeclareFieldFormat{textcitehyperref}{%
+%   \DeclareFieldAlias{bibhyperref}{noformat}% Avoid nested links
+%   \bibhyperref{%
+%     #1%
+%     \ifbool{cbx:parens}
+%       {\bibcloseparen\global\boolfalse{cbx:parens}}
+%       {}}}
+
+% \savebibmacro{cite}
+% \savebibmacro{textcite}
+
+% \renewbibmacro*{cite}{%
+%   \printtext[citehyperref]{%
+%     \restorebibmacro{cite}%
+%     \usebibmacro{cite}}}
+
+% \renewbibmacro*{textcite}{%
+%   \ifboolexpr{
+%     ( not test {\iffieldundef{prenote}} and
+%       test {\ifnumequal{\value{citecount}}{1}} )
+%     or
+%     ( not test {\iffieldundef{postnote}} and
+%       test {\ifnumequal{\value{citecount}}{\value{citetotal}}} )
+%   }
+%     {\DeclareFieldAlias{textcitehyperref}{noformat}}
+%     {}%
+%   \printtext[textcitehyperref]{%
+%     \restorebibmacro{textcite}%
+%     \usebibmacro{textcite}}}
+
+% Biblatex \textcite using a superscript reference number
+% https://tex.stackexchange.com/questions/114833/biblatex-textcite-using-a-superscript-reference-number
+\makeatletter
+\renewbibmacro*{textcite}{%
+  \iffieldequals{namehash}{\cbx@lasthash}
+    {\mkbibsuperscript{\supercitedelim}}
+    {\cbx@tempa
+     \ifnameundef{labelname}
+       {\printfield[citetitle]{labeltitle}}
+       {\printnames{labelname}}}%
+  \ifnumequal{\value{citecount}}{1}
+    {}
+    {}%
+  \mkbibsuperscript{\usebibmacro{cite}}%
+  \savefield{namehash}{\cbx@lasthash}%
+  \gdef\cbx@tempa{\addspace\multicitedelim}}%
+
+\DeclareCiteCommand{\textcite}
+  {\let\cbx@tempa=\empty
+   \undef\cbx@lasthash
+   \iffieldundef{prenote}
+     {}
+     {\BibliographyWarning{Ignoring prenote argument}}%
+   \iffieldundef{postnote}
+     {}
+     {\BibliographyWarning{Ignoring postnote argument}}}
+  {\usebibmacro{citeindex}%
+   \usebibmacro{textcite}}
+  {}
+  {}
+\makeatother
+
+\addbibresource{assets/ref.bib}
+
+
+% links in document
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+%\usepackage[colorlinks=false]{hyperref}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% TABLES, FIGURES, AND CAPTIONS %
+
+% caption for tables and figures
+\usepackage[labelfont=bf, labelsep=period]{caption} %others: labelfont and textfont
+    \captionsetup[table]{font={normalsize, stretch=1.1}, skip=3pt}
+    \captionsetup[figure]{font={normalsize, stretch=1.1}, skip=0.5pt}
+
+% row height of table contents
+\renewcommand{\arraystretch}{1.1} 
+
+% neatly formatting (table) lines
+\usepackage{booktabs} 
+
+% define new input command to enable table inclusion from external file
+\makeatletter
+\let\PlainInput=\@@input 
+\makeatother
+
+% enable figure addition
+\usepackage{graphicx} 
+
+% keep tables and figures "here"
+\usepackage{float}    
+
+% needed for table formatting
+\usepackage{tabularx} 
+\usepackage{multirow}
+\usepackage{array}
+    \newcolumntype{L}[1]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+    \newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+    \newcolumntype{R}[1]{>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+
+% For font size
+\usepackage{anyfontsize}
+
+% For space between items
+\usepackage{enumitem}
+
+% for better paragraphing
+\usepackage{microtype} 
+
+
+\usepackage{amsmath}
+
+% Settings for the author block
+\usepackage{authblk}
+\usepackage{ragged2e}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% left align title, authors, and affiliations
+\makeatletter
+\renewcommand\maketitle{\par
+  \begingroup
+    \flushleft
+    \LARGE \setstretch{1.1} {\@title}\par
+  \endgroup
+  \vspace{-0.2em}
+  \begin{flushleft}
+    \large \setstretch{1.1} \@author
+  \end{flushleft}
+}
+\makeatother
+\renewcommand\Affilfont{\small \itshape}
