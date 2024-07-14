@@ -114,6 +114,10 @@ studies <- studies %>%
                                   TRUE ~ switches),
          anySwitch = case_when(is.na(new_switches) ~ NA, 
                                new_switches!=0 ~ 1,
+                               TRUE ~ 0),
+         # Natalie analysis
+         anySwitch2 = case_when(is.na(new_switches) ~ 1, 
+                               new_switches!=0 ~ 1,
                                TRUE ~ 0))
 
 
@@ -262,7 +266,61 @@ t.test(priceIntvUSD ~ switchRL, studies)
 
 
 ttest <- t.test(priceIntvUSD ~ anySwitch, studies)
+
 ttest$estimate
 ttest$conf.int
 ttest$p.value
+
+# Exclude rows with missing values in 'anySwitch' before calculating weights
+df_filtered <- studies %>% 
+  filter(!is.na(anySwitch)) %>% 
+  group_by(studyID) %>%
+  mutate(weights = 1/n()) %>% 
+  select(studyID, uniqueID, weights)
+
+# Merge the weights back to the original data frame, setting weight to 0 for excluded rows
+studies <- studies %>%
+  left_join(df_filtered, by = "uniqueID") %>%
+  mutate(weights = ifelse(is.na(weights), 0, weights)) %>% 
+  select(-studyID.y)
+
+# Create new data frame, no rows with missing price and other comparisons
+df_model <- studies %>%
+  filter(!is.na(priceIntvUSD), comparison!="Others")
+
+
+# Replicating original (NC) analysis
+print(summary(glm(anySwitch2 ~ comparison + perspective + income + 
+                herdEffects + seroReplace + priceIntvUSD,
+              family = binomial(link = "probit"), data = df_model)),
+        digits = 1)
+
+# Fit a probit model on anySwitch with weights
+model <- studies %>%
+  filter(!is.na(anySwitch), comparison != "Others")
+
+glm(anySwitch2 ~ comparison + perspective + income + 
+      herdEffects + seroReplace + priceIntvUSD,
+    family = binomial(link = "probit"), data = model2)
+
+
+probit <- glm(anySwitch ~ comparison + perspective + income + 
+                herdEffects + seroReplace + priceIntvUSD,
+              family = binomial(link = "probit"), data = df_model)
+print(summary(probit), digits = 1)
+tbl_regression(probit, exponentiate = F)
+
+probitW <- glm(anySwitch ~ comparison + perspective + income + 
+                 herdEffects + seroReplace + priceIntvUSD,
+               family = binomial(link = "probit"), data = df_model, 
+               weights = weights)
+print(summary(probitW), digits = 2)
+tbl_regression(probitW, exponentiate = F)
+
+logitW <- glm(anySwitch ~ comparison + perspective + income + 
+                 herdEffects + seroReplace + priceIntvUSD,
+               family = binomial(link = "logit"), data = df_model, 
+               weights = weights)
+print(summary(logitW), digits = 2)
+tbl_regression(logitW, exponentiate = F)
 
