@@ -1,5 +1,5 @@
 % Last updated 25 March 2024
-\ProvidesPackage{latex/ediArticle}
+\ProvidesPackage{latex/supp}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % DOCUMENT LAYOUT AND PARAGRAPHS %
@@ -17,15 +17,19 @@
     \titlespacing\section{0pt}{4pt plus 0pt minus 0pt}{-4pt plus 0pt minus 0pt}
     \titlespacing\subsection{0pt}{4pt plus 0pt minus 0pt}{-4pt plus 0pt minus 0pt}
     \titlespacing\subsubsection{0pt}{4pt plus 0pt minus 0pt}{-8pt plus 0pt minus 0pt}
-    \titleformat{\section}{\Large\bfseries}{\thesection}{0.4em}{}
-    \titleformat{\subsection}{\large\bfseries}{\thesubsection}{0.3em}{}{}
-    \titleformat{\subsubsection}{\small\bfseries\uppercase}{\thesubsubsection}{0.1em}{}{}
+    \titleformat{\section}{\normalsize\bfseries}{\thesection}{0em}{}
+    \titleformat{\subsection}{\footnotesize\bfseries}{\thesubsection}{0em}{}{}
+    \titleformat{\subsubsection}{\scriptsize\bfseries\uppercase}{\thesubsubsection}{0em}{}{}
 
-% Redefine \thesection to include a period after the section number
-\renewcommand\thesection{\arabic{section}.}
-\renewcommand\thesubsection{\thesection\arabic{subsection}.}
+% Include a period after the section number
+%\renewcommand\thesection{\arabic{section}.}
+%\renewcommand\thesubsection{\thesection\arabic{subsection}.}
 %\renewcommand\thesubsubsection{\thesubsection\arabic{subsubsection}.}
-\renewcommand\thesubsubsection{{}} % use above if you want numbered subsubsections
+
+% Or use unnumbered subsubsections
+\renewcommand\thesection{} 
+\renewcommand\thesubsection{} 
+\renewcommand\thesubsubsection{{}} 
 
 % line spacing of paragraphs
 \usepackage{setspace} 
@@ -83,43 +87,6 @@
       urlseen = {accessed},
       in = {}}
 
-% The following code ensures both author and year are hyperlinked. Solution is based on https://tex.stackexchange.com/questions/15951/hyperlink-name-with-biblatex-authoryear-biblatex-1-4b/27107
-% \DeclareFieldFormat{citehyperref}{%
-%   \DeclareFieldAlias{bibhyperref}{noformat}% Avoid nested links
-%   \bibhyperref{#1}}
-
-% \DeclareFieldFormat{textcitehyperref}{%
-%   \DeclareFieldAlias{bibhyperref}{noformat}% Avoid nested links
-%   \bibhyperref{%
-%     #1%
-%     \ifbool{cbx:parens}
-%       {\bibcloseparen\global\boolfalse{cbx:parens}}
-%       {}}}
-
-% \savebibmacro{cite}
-% \savebibmacro{textcite}
-
-% \renewbibmacro*{cite}{%
-%   \printtext[citehyperref]{%
-%     \restorebibmacro{cite}%
-%     \usebibmacro{cite}}}
-
-% \renewbibmacro*{textcite}{%
-%   \ifboolexpr{
-%     ( not test {\iffieldundef{prenote}} and
-%       test {\ifnumequal{\value{citecount}}{1}} )
-%     or
-%     ( not test {\iffieldundef{postnote}} and
-%       test {\ifnumequal{\value{citecount}}{\value{citetotal}}} )
-%   }
-%     {\DeclareFieldAlias{textcitehyperref}{noformat}}
-%     {}%
-%   \printtext[textcitehyperref]{%
-%     \restorebibmacro{textcite}%
-%     \usebibmacro{textcite}}}
-
-% Biblatex \textcite using a superscript reference number
-% https://tex.stackexchange.com/questions/114833/biblatex-textcite-using-a-superscript-reference-number
 \makeatletter
 \renewbibmacro*{textcite}{%
   \iffieldequals{namehash}{\cbx@lasthash}
@@ -150,7 +117,7 @@
   {}
 \makeatother
 
-\addbibresource{latex/references.bib}
+\addbibresource{latex/ref.bib}
 
 
 % links in document
@@ -199,3 +166,26 @@
 
 % for better paragraphing
 \usepackage{microtype} 
+
+
+\usepackage{amsmath}
+
+% Settings for the author block
+\usepackage{authblk}
+\usepackage{ragged2e}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% left align title, authors, and affiliations
+\makeatletter
+\renewcommand\maketitle{\par
+  \begingroup
+    \flushleft
+    \large \setstretch{1.1} {\@title}\par
+  \endgroup
+  \vspace{-0.2em}
+  \begin{flushleft}
+    \small \setstretch{1.1} \@author
+  \end{flushleft}
+}
+\makeatother
+\renewcommand\Affilfont{\scriptsize \itshape}
