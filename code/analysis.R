@@ -9,6 +9,9 @@ library(kableExtra)
 # Import studies from folder
 studies <- read.csv("data/studies.csv", row.names=NULL, stringsAsFactors=TRUE)
 
+
+#studies <- readxl::read_excel("data/studies.xlsx", sheet = "studies")
+
 Include = c("comparison", "doseNum", "perspective", "income", "herdEffects", 
             "seroReplace", "efficacyPneum", "efficacyIPD", "efficacyOtitis", 
             "budgetImpact", "studyDecide")
