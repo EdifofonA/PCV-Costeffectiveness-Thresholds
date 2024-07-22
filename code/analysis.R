@@ -108,21 +108,140 @@ df <- add_header_above(df, c(" ", " ", " ", "Ochalek (2018)" = 2,
 writeLines(df, "tables/tab_evals_thresholds.tex")
 
 
-
-
-# Make "new_switches" variable that is only relevant to evaluations that switch from being cost-effective (not "cost-saving" or "not cost-effective")
+# Make "anySwitch" variable for switching based on any threshold
 studies <- studies %>%
-  mutate(new_switches = case_when(switches==0 & studyDecide=="Cost-saving" ~ NA,
-                                  switches==0 & studyDecide=="Not cost-effective" ~ NA,
-                                  TRUE ~ switches),
-         anySwitch = case_when(is.na(new_switches) ~ NA, 
-                               new_switches!=0 ~ 1,
-                               TRUE ~ 0),
-         # Natalie analysis
-         anySwitch2 = case_when(is.na(new_switches) ~ 1, 
-                               new_switches!=0 ~ 1,
-                               TRUE ~ 0))
+  mutate(anySwitch = case_when(is.na(switches) ~ NA, switches!=0 ~ 1, TRUE ~ 0))
 
+
+# Create contingency table with frequencies
+f.Switch <- function(typeVar){
+  data = studies[studies$comparison!="Others", ]
+  data = droplevels(data)
+  x = table(data[[typeVar]], data[["anySwitch"]])
+  switchProp = prop.table(x, margin = 1) * 100
+  return(list(typeVar = rep(typeVar, length(levels(data[[typeVar]]))),
+              level = rownames(switchProp),
+              switchProp = round(switchProp[, "1"], 1),
+              `p-value` = rep(round(fisher.test(x)$p, 3), 
+                              length(levels(data[[typeVar]])))))
+}
+
+studies$herdEffects = factor(studies$herdEffects)
+studies$seroReplace = factor(studies$seroReplace)
+studies$income      = factor(studies$income)
+studies$perspective = factor(studies$perspective)
+
+df <- rbind(data.frame(f.Switch("comparison")),
+            data.frame(f.Switch("income")),
+            data.frame(f.Switch("herdEffects")),
+            data.frame(f.Switch("seroReplace")),
+            data.frame(f.Switch("perspective")))
+rownames(df) <- NULL
+
+df$level[df$level=="0"] <- "Excluded"
+df$level[df$level=="1"] <- "Included"
+
+df$typeVar[df$typeVar=="comparison"]  <- "Type of comparison"
+df$typeVar[df$typeVar=="income"]      <- "Income group"
+df$typeVar[df$typeVar=="herdEffects"] <- "Herd effects"
+df$typeVar[df$typeVar=="seroReplace"] <- "Serotype replacement"
+df$typeVar[df$typeVar=="perspective"] <- "Study perspective"
+
+
+# Clean up table for Kable
+df$switchProp <- format(df$switchProp, nsmall = 1)
+df$switchProp <- paste(df$switchProp, "%", sep="")
+names(df)     <- c("Characteristic", "Category levels", "Switch proportion", "P-value")
+
+# Convert to Kable and remove latex preambles
+tab_likely_anyswitch <- kable(df, format = "latex")
+tab_likely_anyswitch <- tab_likely_anyswitch %>% 
+  collapse_rows(columns = c(1,4), valign = "top") %>%
+  gsub(".(begin|end){tabular.*}", "", ., perl = TRUE) %>%
+  sub("\\\\hline", "", .)  
+writeLines(tab_likely_anyswitch, "tables/tab_likely_anyswitch.tex")
+
+
+
+
+# Table of price intervals
+studies %>%
+  group_by(anySwitch) %>%
+  summarize(priceIntvUSD = mean(priceIntvUSD, na.rm = T))
+
+
+ttest <- t.test(priceIntvUSD ~ anySwitch, studies)
+ttest$estimate
+ttest$conf.int
+ttest$p.value
+
+# Exclude rows with missing values in 'anySwitch' before calculating weights
+df_filtered <- studies %>% 
+  filter(!is.na(anySwitch)) %>% 
+  group_by(studyID, country, comparison) %>%
+  mutate(weights = 1/n()) %>% 
+  select(studyID, uniqueID, country, comparison, weights)
+
+# Merge the weights back to the original data frame, setting weight to 0 for excluded rows
+studies <- studies %>%
+  left_join(df_filtered, by = "uniqueID") %>%
+  mutate(weights = ifelse(is.na(weights), 0, weights)) %>% 
+  select(-c(studyID.y, country.y, comparison.y)) %>% 
+  rename(studyID=studyID.x, country=country.x, comparison=comparison.x)
+
+# Create new data frame, no rows with missing price and other comparisons
+df_model <- studies %>%
+  filter(!is.na(anySwitch), !is.na(priceIntvUSD), comparison != "Others")
+
+df_model$seroReplace <- as.numeric(df_model$seroReplace)
+
+
+# Probit model without weights
+probit <- glm(anySwitch ~ comparison + perspective + income + 
+                as.numeric(herdEffects) + as.numeric(seroReplace) + cVaxDiffUSD,
+              family = binomial(link = "probit"), data = df_model)
+print(summary(probit))
+tbl_regression(probit)
+
+# Probit model with weights
+probitW <- glm(anySwitch ~ comparison + perspective + income + 
+                 as.numeric(herdEffects) + as.numeric(seroReplace) + cVaxDiffUSD,
+               family = binomial(link = "probit"), data = df_model, 
+               weights = weights)
+print(summary(probitW))
+tbl_regression(probitW)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# t.test(priceIntvUSD ~ switchOH, studies)
+# t.test(priceIntvUSD ~ switchOL, studies)
+# t.test(priceIntvUSD ~ switchWH, studies)
+# t.test(priceIntvUSD ~ switchWL, studies)
+# t.test(priceIntvUSD ~ switchRH, studies)
+# t.test(priceIntvUSD ~ switchRL, studies)
 
 # # Create contingency table with frequencies
 # f.Switch <- function(typeVar, switchVar){
@@ -201,133 +320,8 @@ studies <- studies %>%
 #   sub("\\\\hline", "", .)  
 # writeLines(tab_likely_switch, "tables/tab_likely_switch.tex")
 
-
-
-
-# Create contingency table with frequencies
-f.Switch <- function(typeVar){
-  data = studies[studies$comparison!="Others", ]
-  data = droplevels(data)
-  x = table(data[[typeVar]], data[["anySwitch"]])
-  switchProp = prop.table(x, margin = 1) * 100
-  return(list(typeVar = rep(typeVar, length(levels(data[[typeVar]]))),
-              level = rownames(switchProp),
-              switchProp = round(switchProp[, "1"], 1),
-              `p-value` = rep(round(fisher.test(x)$p, 3), 
-                              length(levels(data[[typeVar]])))))
-}
-
-studies$herdEffects = factor(studies$herdEffects)
-studies$seroReplace = factor(studies$seroReplace)
-studies$income      = factor(studies$income)
-studies$perspective = factor(studies$perspective)
-
-df <- rbind(data.frame(f.Switch("comparison")),
-            data.frame(f.Switch("income")),
-            data.frame(f.Switch("herdEffects")),
-            data.frame(f.Switch("seroReplace")),
-            data.frame(f.Switch("perspective")))
-rownames(df) <- NULL
-
-df$level[df$level=="0"] <- "Excluded"
-df$level[df$level=="1"] <- "Included"
-
-df$typeVar[df$typeVar=="comparison"]  <- "Type of comparison"
-df$typeVar[df$typeVar=="income"]      <- "Income group"
-df$typeVar[df$typeVar=="herdEffects"] <- "Herd effects"
-df$typeVar[df$typeVar=="seroReplace"] <- "Serotype replacement"
-df$typeVar[df$typeVar=="perspective"] <- "Study perspective"
-
-
-# Clean up table for Kable
-df$switchProp <- format(df$switchProp, nsmall = 1)
-df$switchProp <- paste(df$switchProp, "%", sep="")
-names(df)     <- c("Characteristic", "Category levels", "Switch proportion", "P-value")
-
-# Convert to Kable and remove latex preambles
-tab_likely_anyswitch <- kable(df, format = "latex")
-tab_likely_anyswitch <- tab_likely_anyswitch %>% 
-  collapse_rows(columns = c(1,4), valign = "top") %>%
-  gsub(".(begin|end){tabular.*}", "", ., perl = TRUE) %>%
-  sub("\\\\hline", "", .)  
-writeLines(tab_likely_anyswitch, "tables/tab_likely_anyswitch.tex")
-
-
-
-
-# Table of price intervals
-studies %>%
-  group_by(anySwitch) %>%
-  summarize(priceIntvUSD = mean(priceIntvUSD, na.rm = T))
-
-
-#
-aggregate(priceIntvUSD ~ switchOH, studies, mean, na.rm = T)
-
-t.test(priceIntvUSD ~ switchOH, studies)
-t.test(priceIntvUSD ~ switchOL, studies)
-t.test(priceIntvUSD ~ switchWH, studies)
-t.test(priceIntvUSD ~ switchWL, studies)
-t.test(priceIntvUSD ~ switchRH, studies)
-t.test(priceIntvUSD ~ switchRL, studies)
-
-
-ttest <- t.test(priceIntvUSD ~ anySwitch, studies)
-
-ttest$estimate
-ttest$conf.int
-ttest$p.value
-
-# Exclude rows with missing values in 'anySwitch' before calculating weights
-df_filtered <- studies %>% 
-  filter(!is.na(anySwitch)) %>% 
-  group_by(studyID) %>%
-  mutate(weights = 1/n()) %>% 
-  select(studyID, uniqueID, weights)
-
-# Merge the weights back to the original data frame, setting weight to 0 for excluded rows
-studies <- studies %>%
-  left_join(df_filtered, by = "uniqueID") %>%
-  mutate(weights = ifelse(is.na(weights), 0, weights)) %>% 
-  select(-studyID.y)
-
-# Create new data frame, no rows with missing price and other comparisons
-df_model <- studies %>%
-  filter(!is.na(priceIntvUSD), comparison!="Others")
-
-
 # Replicating original (NC) analysis
-print(summary(glm(anySwitch2 ~ comparison + perspective + income + 
-                herdEffects + seroReplace + priceIntvUSD,
-              family = binomial(link = "probit"), data = df_model)),
-        digits = 1)
-
-# Fit a probit model on anySwitch with weights
-model <- studies %>%
-  filter(!is.na(anySwitch), comparison != "Others")
-
-glm(anySwitch2 ~ comparison + perspective + income + 
-      herdEffects + seroReplace + priceIntvUSD,
-    family = binomial(link = "probit"), data = model2)
-
-
-probit <- glm(anySwitch ~ comparison + perspective + income + 
-                herdEffects + seroReplace + priceIntvUSD,
-              family = binomial(link = "probit"), data = df_model)
-print(summary(probit), digits = 1)
-tbl_regression(probit, exponentiate = F)
-
-probitW <- glm(anySwitch ~ comparison + perspective + income + 
-                 herdEffects + seroReplace + priceIntvUSD,
-               family = binomial(link = "probit"), data = df_model, 
-               weights = weights)
-print(summary(probitW), digits = 2)
-tbl_regression(probitW, exponentiate = F)
-
-logitW <- glm(anySwitch ~ comparison + perspective + income + 
-                 herdEffects + seroReplace + priceIntvUSD,
-               family = binomial(link = "logit"), data = df_model, 
-               weights = weights)
-print(summary(logitW), digits = 2)
-tbl_regression(logitW, exponentiate = F)
-
+# print(summary(glm(anySwitch2 ~ comparison + perspective + income + 
+#                 herdEffects + seroReplace + priceIntvUSD,
+#               family = binomial(link = "probit"), data = df_model)),
+#         digits = 1)
