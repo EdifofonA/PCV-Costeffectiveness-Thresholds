@@ -7,10 +7,10 @@ library(scales)
 library(kableExtra)
 
 # Import studies from folder
-studies <- read.csv("data/studies.csv", row.names=NULL, stringsAsFactors=TRUE)
+#studies <- read.csv("data/studies.csv", row.names=NULL, stringsAsFactors=TRUE)
 
 
-#studies <- readxl::read_excel("data/studies.xlsx", sheet = "studies")
+studies <- readxl::read_excel("data/studies.xlsx", sheet = "studies")
 
 Include = c("comparison", "doseNum", "perspective", "income", "herdEffects", 
             "seroReplace", "efficacyPneum", "efficacyIPD", "efficacyOtitis", 
@@ -71,7 +71,7 @@ df <- tbl_merge(list(df1, df2), tab_spanner=FALSE) %>%
   as_kable_extra(, format = "latex", escape = FALSE) %>%
   gsub(".(begin|end){tabular.*}", "", ., perl = TRUE) %>% # remove tabular
   sub("\\\\hline", "", .)  # remove the first hline
-writeLines(df, "output/tables/tab_evals_studies.tex")
+writeLines(df, "tables/tab_evals_studies.tex")
 rm(df1, df2, df)
 
 
@@ -105,7 +105,7 @@ df <- add_header_above(df, c(" ", " ", " ", "Ochalek (2018)" = 2,
                        border_left = T, border_right = T) %>% 
   gsub(".(begin|end){tabular.*}", "", ., perl = TRUE) %>% # remove tabular
   sub("\\\\hline", "", .)  # remove the first hline
-writeLines(df, "output/tables/tab_evals_thresholds.tex")
+writeLines(df, "tables/tab_evals_thresholds.tex")
 
 
 
@@ -124,91 +124,89 @@ studies <- studies %>%
                                TRUE ~ 0))
 
 
+# # Create contingency table with frequencies
+# f.Switch <- function(typeVar, switchVar){
+#   data = studies[studies$comparison!="Others", ]
+#   data = droplevels(data)
+#   x = table(data[[typeVar]], data[[switchVar]])
+#   switchProp = prop.table(x, margin = 1) * 100
+#   return(list(typeVar = typeVar,
+#               switchVar = switchVar,
+#               level = rownames(switchProp)[which.max(switchProp[, "1"])], 
+#               max   = round(max(switchProp[, "1"]), 1), 
+#               `p-value` = round(fisher.test(x)$p, 3)))
+# }
+# 
+# df <- as.data.frame(rbind(f.Switch("comparison", "switchOH"),
+#                            f.Switch("comparison", "switchOL"),
+#                            f.Switch("comparison", "switchWH"),
+#                            f.Switch("comparison", "switchWL"),
+#                            f.Switch("comparison", "switchRH"),
+#                            f.Switch("comparison", "switchRL"),
+#                            f.Switch("income", "switchOH"),
+#                            f.Switch("income", "switchOL"),
+#                            f.Switch("income", "switchWH"),
+#                            f.Switch("income", "switchWL"),
+#                            f.Switch("income", "switchRH"),
+#                            f.Switch("income", "switchRL"),
+#                            f.Switch("herdEffects", "switchOH"),
+#                            f.Switch("herdEffects", "switchOL"),
+#                            f.Switch("herdEffects", "switchWH"),
+#                            f.Switch("herdEffects", "switchWL"),
+#                            f.Switch("herdEffects", "switchRH"),
+#                            f.Switch("herdEffects", "switchRL"),
+#                            f.Switch("seroReplace", "switchOH"),
+#                            f.Switch("seroReplace", "switchOL"),
+#                            f.Switch("seroReplace", "switchWH"),
+#                            f.Switch("seroReplace", "switchWL"),
+#                            f.Switch("seroReplace", "switchRH"),
+#                            f.Switch("seroReplace", "switchRL"),
+#                            f.Switch("perspective", "switchOH"),
+#                            f.Switch("perspective", "switchOL"),
+#                            f.Switch("perspective", "switchWH"),
+#                            f.Switch("perspective", "switchWL"),
+#                            f.Switch("perspective", "switchRH"),
+#                            f.Switch("perspective", "switchRL")))
+# 
+# df$level[df$level=="0"] <- "Excluded"
+# df$level[df$level=="1"] <- "Included"
+# 
+# df$typeVar[df$typeVar=="comparison"]  <- "Type of comparison"
+# df$typeVar[df$typeVar=="income"]      <- "Income group"
+# df$typeVar[df$typeVar=="herdEffects"] <- "Herd effects"
+# df$typeVar[df$typeVar=="seroReplace"] <- "Serotype replacement"
+# df$typeVar[df$typeVar=="perspective"] <- "Study perspective"
+# 
+# df$switchVar[df$switchVar=="switchOH"] <- "Ochalek (2018) high"
+# df$switchVar[df$switchVar=="switchOL"] <- "Ochalek (2018) low"
+# df$switchVar[df$switchVar=="switchWH"] <- "Woods (2016) high"
+# df$switchVar[df$switchVar=="switchWL"] <- "Woods (2016) low"
+# df$switchVar[df$switchVar=="switchRH"] <- "P-Rivière (2023) high"
+# df$switchVar[df$switchVar=="switchRL"] <- "P-Rivière (2023) low"
+# 
+# 
+# # Clean up table for Kable
+# df$`p-value` <- format(df$`p-value`, nsmall = 3)
+# df$max       <- format(df$max, nsmall = 1)
+# df$lSwitch   <- paste(df$max, "% (p=", df$`p-value`, ")", sep="")
+# df           <- df[, c("typeVar", "switchVar", "level", "lSwitch")]
+# names(df)    <- c("Characteristic", "Threshold", 
+#                   "Most likely switch", "Switch proportion")
+# 
+# # Convert to Kable and remove latex preambles
+# tab_likely_switch <- kable(df, format = "latex")
+# tab_likely_switch <- tab_likely_switch %>% 
+#   collapse_rows(columns = 1, valign = "top") %>%
+#   gsub(".(begin|end){tabular.*}", "", ., perl = TRUE) %>%
+#   sub("\\\\hline", "", .)  
+# writeLines(tab_likely_switch, "tables/tab_likely_switch.tex")
+
+
+
+
 # Create contingency table with frequencies
-f.Switch <- function(typeVar, switchVar){
+f.Switch <- function(typeVar){
   data = studies[studies$comparison!="Others", ]
-  data = droplevels(data)
-  x = table(data[[typeVar]], data[[switchVar]])
-  switchProp = prop.table(x, margin = 1) * 100
-  return(list(typeVar = typeVar,
-              switchVar = switchVar,
-              level = rownames(switchProp)[which.max(switchProp[, "1"])], 
-              max   = round(max(switchProp[, "1"]), 1), 
-              `p-value` = round(fisher.test(x)$p, 3)))
-}
-
-df <- as.data.frame(rbind(f.Switch("comparison", "switchOH"),
-                           f.Switch("comparison", "switchOL"),
-                           f.Switch("comparison", "switchWH"),
-                           f.Switch("comparison", "switchWL"),
-                           f.Switch("comparison", "switchRH"),
-                           f.Switch("comparison", "switchRL"),
-                           f.Switch("income", "switchOH"),
-                           f.Switch("income", "switchOL"),
-                           f.Switch("income", "switchWH"),
-                           f.Switch("income", "switchWL"),
-                           f.Switch("income", "switchRH"),
-                           f.Switch("income", "switchRL"),
-                           f.Switch("herdEffects", "switchOH"),
-                           f.Switch("herdEffects", "switchOL"),
-                           f.Switch("herdEffects", "switchWH"),
-                           f.Switch("herdEffects", "switchWL"),
-                           f.Switch("herdEffects", "switchRH"),
-                           f.Switch("herdEffects", "switchRL"),
-                           f.Switch("seroReplace", "switchOH"),
-                           f.Switch("seroReplace", "switchOL"),
-                           f.Switch("seroReplace", "switchWH"),
-                           f.Switch("seroReplace", "switchWL"),
-                           f.Switch("seroReplace", "switchRH"),
-                           f.Switch("seroReplace", "switchRL"),
-                           f.Switch("perspective", "switchOH"),
-                           f.Switch("perspective", "switchOL"),
-                           f.Switch("perspective", "switchWH"),
-                           f.Switch("perspective", "switchWL"),
-                           f.Switch("perspective", "switchRH"),
-                           f.Switch("perspective", "switchRL")))
-
-df$level[df$level=="0"] <- "Excluded"
-df$level[df$level=="1"] <- "Included"
-
-df$typeVar[df$typeVar=="comparison"]  <- "Type of comparison"
-df$typeVar[df$typeVar=="income"]      <- "Income group"
-df$typeVar[df$typeVar=="herdEffects"] <- "Herd effects"
-df$typeVar[df$typeVar=="seroReplace"] <- "Serotype replacement"
-df$typeVar[df$typeVar=="perspective"] <- "Study perspective"
-
-df$switchVar[df$switchVar=="switchOH"] <- "Ochalek (2018) high"
-df$switchVar[df$switchVar=="switchOL"] <- "Ochalek (2018) low"
-df$switchVar[df$switchVar=="switchWH"] <- "Woods (2016) high"
-df$switchVar[df$switchVar=="switchWL"] <- "Woods (2016) low"
-df$switchVar[df$switchVar=="switchRH"] <- "P-Rivière (2023) high"
-df$switchVar[df$switchVar=="switchRL"] <- "P-Rivière (2023) low"
-
-
-# Clean up table for Kable
-df$`p-value` <- format(df$`p-value`, nsmall = 3)
-df$max       <- format(df$max, nsmall = 1)
-df$lSwitch   <- paste(df$max, "% (p=", df$`p-value`, ")", sep="")
-df           <- df[, c("typeVar", "switchVar", "level", "lSwitch")]
-names(df)    <- c("Characteristic", "Threshold", 
-                  "Most likely switch", "Switch proportion")
-
-# Convert to Kable and remove latex preambles
-tab_likely_switch <- kable(df, format = "latex")
-tab_likely_switch <- tab_likely_switch %>% 
-  collapse_rows(columns = 1, valign = "top") %>%
-  gsub(".(begin|end){tabular.*}", "", ., perl = TRUE) %>%
-  sub("\\\\hline", "", .)  
-writeLines(tab_likely_switch, "output/tables/tab_likely_switch.tex")
-
-
-
-
-# Create contingency table with frequencies
-f.Switch2 <- function(typeVar){
-  data = studies[studies$comparison!="Others", ]
-  data$herdEffects = factor(data$herdEffects)
-  data$seroReplace = factor(data$seroReplace)
   data = droplevels(data)
   x = table(data[[typeVar]], data[["anySwitch"]])
   switchProp = prop.table(x, margin = 1) * 100
@@ -218,11 +216,17 @@ f.Switch2 <- function(typeVar){
               `p-value` = rep(round(fisher.test(x)$p, 3), 
                               length(levels(data[[typeVar]])))))
 }
-df <- rbind(data.frame(f.Switch2("comparison")),
-            data.frame(f.Switch2("income")),
-            data.frame(f.Switch2("herdEffects")),
-            data.frame(f.Switch2("seroReplace")),
-            data.frame(f.Switch2("perspective")))
+
+studies$herdEffects = factor(studies$herdEffects)
+studies$seroReplace = factor(studies$seroReplace)
+studies$income      = factor(studies$income)
+studies$perspective = factor(studies$perspective)
+
+df <- rbind(data.frame(f.Switch("comparison")),
+            data.frame(f.Switch("income")),
+            data.frame(f.Switch("herdEffects")),
+            data.frame(f.Switch("seroReplace")),
+            data.frame(f.Switch("perspective")))
 rownames(df) <- NULL
 
 df$level[df$level=="0"] <- "Excluded"
@@ -246,7 +250,7 @@ tab_likely_anyswitch <- tab_likely_anyswitch %>%
   collapse_rows(columns = c(1,4), valign = "top") %>%
   gsub(".(begin|end){tabular.*}", "", ., perl = TRUE) %>%
   sub("\\\\hline", "", .)  
-writeLines(tab_likely_anyswitch, "output/tables/tab_likely_anyswitch.tex")
+writeLines(tab_likely_anyswitch, "tables/tab_likely_anyswitch.tex")
 
 
 
